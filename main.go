@@ -2,13 +2,47 @@ package main
 
 import (
 	"IAM/pkg/cache"
+	"IAM/pkg/model"
 	"IAM/pkg/token"
-	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	"log"
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	//id, err := model.CreateAccounts("Admin", "123456", "", 255)
+	//log.Println(id, err)
+	//id, err = model.CreateAccounts("Manager", "55688", "", 200)
+	//log.Println(id, err)
+	//id, err = model.CreateAccounts("Member", "00757", "abc@123.com", 100)
+	//log.Println(id, err)
+
+	rows, _ := model.QueryAllAccounts()
+	log.Println("取得全部帳號", rows)
+
+	result, err := model.VerifyPassword("Admin", "123456")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("驗證Admin單一帳號的密碼", result)
+	result, err = model.VerifyPassword("Manager", "123456")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("驗證Manager單一帳號的密碼", result)
+
+	// 更新account
+	newnew := make(map[string]interface{})
+	newnew["id"] = 3
+	newnew["password"] = "0000000000"
+	newnew["email"] = "444@333.com"
+	err = model.UpdateAccount(newnew)
+	if err != nil {
+		log.Fatal(err)
+	}
 	tk := token.GenerateToken("")
-	fmt.Println("token:", tk)
+	log.Println("token:", tk)
 	//gc := cache.BuildCacheObject()
 	//fmt.Printf("%T", gc)
 	TokenID := tk
@@ -17,11 +51,11 @@ func main() {
 	cache.SetWithExpire(TokenID, Tokenvv, 300)
 
 	tk2 := token.GenerateToken("")
-	fmt.Println("token2:", tk2)
+	log.Println("token2:", tk2)
 	cache.SetWithExpire(tk2, cache.TokenValue{Id: 2, Auth: 400}, 300)
 
 	value := cache.GetAllCache()
-	fmt.Println(value)
+	log.Println(value)
 	for k, v := range value {
 		userid := v.(cache.TokenValue).Id
 		if userid == 2 {
@@ -29,5 +63,5 @@ func main() {
 		}
 	}
 	value2 := cache.GetAllCache()
-	fmt.Println(value2)
+	log.Println(value2)
 }
