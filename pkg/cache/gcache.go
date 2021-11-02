@@ -19,15 +19,16 @@ func SetWithExpire(TokenID string, Tokenvv interface{}, seconds int) {
 	gc.SetWithExpire(TokenID, Tokenvv, time.Second*time.Duration(seconds))
 }
 
-// 取得指定key的數據
+// 取得指定token的數據
 func CacheGet(key string) (value interface{}, err error) {
 	value, err = gc.Get(key)
 	return
 }
 
 // 將指定的key從cache移除
-func CacheRemove(key string) {
-	gc.Remove(key)
+func CacheRemove(key string) bool {
+	ok := gc.Remove(key)
+	return ok
 }
 
 // 取得全部cache的數據

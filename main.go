@@ -21,27 +21,16 @@ func main() {
 	rows, _ := model.QueryAllAccounts()
 	log.Println("取得全部帳號", rows)
 
-	result, err := model.VerifyPassword("Admin", "123456")
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("驗證Admin單一帳號的密碼", result)
-	result, err = model.VerifyPassword("Manager", "123456")
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("驗證Manager單一帳號的密碼", result)
-
 	// 更新account
 	newnew := make(map[string]interface{})
 	newnew["id"] = 3
 	newnew["password"] = "0000000000"
 	newnew["email"] = "444@333.com"
-	err = model.UpdateAccount(newnew)
+	err := model.UpdateAccount(newnew)
 	if err != nil {
 		log.Fatal(err)
 	}
-	tk := token.GenerateToken("")
+	tk, _ := token.GenerateToken("")
 	log.Println("token:", tk)
 	//gc := cache.BuildCacheObject()
 	//fmt.Printf("%T", gc)
@@ -50,7 +39,7 @@ func main() {
 	// 設置token帶有效期限
 	cache.SetWithExpire(TokenID, Tokenvv, 300)
 
-	tk2 := token.GenerateToken("")
+	tk2, _ := token.GenerateToken("")
 	log.Println("token2:", tk2)
 	cache.SetWithExpire(tk2, cache.TokenValue{Id: 2, Auth: 400}, 300)
 

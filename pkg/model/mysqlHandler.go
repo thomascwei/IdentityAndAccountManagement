@@ -1,18 +1,27 @@
 package model
 
 import (
+	"IAM/pkg/cache"
+	"IAM/pkg/password"
+	pd "IAM/pkg/password"
 	"database/sql"
+	"errors"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 )
 
-type Account struct {
+type AccountFields struct {
 	id       int    `json:"id"`
 	username string `json:"username"`
 	email    string `json:"email"`
 	auth     int    `json:"auth"`
 }
+
+//type TokenValue struct {
+//	Id   int
+//	Auth int
+//}
 
 func checkErr(err error) error {
 	return err
@@ -21,6 +30,7 @@ func checkErr(err error) error {
 var db, err = sql.Open("mysql", "root:123456@/iam?charset=utf8")
 
 func CreateAccounts(username, password, email string, auth int) (int64, error) {
+	password = pd.Encryption(password)
 	stmt, err := db.Prepare("INSERT accounts SET username=?,password=?,email=?,auth=?")
 	if err != nil {
 		return 0, err
@@ -36,14 +46,14 @@ func CreateAccounts(username, password, email string, auth int) (int64, error) {
 	return id, err
 }
 
-func QueryAllAccounts() ([]Account, error) {
+func QueryAllAccounts() ([]AccountFields, error) {
 	rows, err := db.Query("SELECT * FROM accounts")
 	if err != nil {
 		return nil, err
 	}
-	var result = make([]Account, 0)
+	var result = make([]AccountFields, 0)
 	for rows.Next() {
-		var account Account
+		var account AccountFields
 		var pwd string
 		err := rows.Scan(&account.id, &account.username, &pwd, &account.email, &account.auth)
 		if err != nil {
@@ -55,23 +65,24 @@ func QueryAllAccounts() ([]Account, error) {
 }
 
 // 驗證帳號密碼, 通過返回true, 失敗返回false
-func VerifyPassword(username, password string) (bool, error) {
-	rows, err := db.Query("SELECT password FROM accounts where username='" + username + "'")
+func VerifyPassword(username, password string) (bool, cache.TokenValue, error) {
+	rows, err := db.Query("SELECT id, auth, password FROM accounts where username='" + username + "'")
 	if err != nil {
-		return false, err
+		return false, cache.TokenValue{}, err
 	}
+	var tokenvalue cache.TokenValue
 	var pwd string
-	//var account Account
+	//var account AccountFields
 	for rows.Next() {
-		err = rows.Scan(&pwd)
+		err = rows.Scan(&tokenvalue.Id, &tokenvalue.Auth, &pwd)
 	}
 	if err != nil {
-		return false, err
+		return false, cache.TokenValue{}, err
 	}
-	if password == pwd {
-		return true, nil
+	if pd.Encryption(password) == pwd {
+		return true, tokenvalue, nil
 	}
-	return false, nil
+	return false, cache.TokenValue{}, errors.New("password invalid")
 }
 
 // 可接受部分欄位變更
@@ -86,21 +97,39 @@ func UpdateAccount(params map[string]interface{}) error {
 	}
 
 	for k, v := range params {
-		if k != "id" {
+		if k == "password" {
 			SetSection += k + "= ?,"
-			args = append(args, v)
+			args = append(args, password.Encryption(v.(string)))
+		} else {
+			if k != "id" {
+				SetSection += k + "= ?,"
+				args = append(args, v)
+			}
 		}
 	}
 	args = append(args, iidd)
 	SetSection = SetSection[:len(SetSection)-1]
 	RawString := "update accounts "
 	RawString = RawString + SetSection + WhereClause
-	//fmt.Println("update syntax", RawString)
+	fmt.Println("update syntax", RawString)
 	stmt, err := db.Prepare(RawString)
 	if err != nil {
 		return err
 	}
 	_, err = stmt.Exec(args...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteAccount(id int64) error {
+	//刪除資料
+	stmt, err := db.Prepare("delete from accounts where id=?")
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(id)
 	if err != nil {
 		return err
 	}

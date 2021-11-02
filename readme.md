@@ -10,7 +10,7 @@
 
   使用gcache存token, 具有有效期
 
-  token驗證通過延長有效期(或overwrite用以更新有效期)
+  token驗證通過延長有效期(overwrite用以更新有效期)
   
   部分DB數據也會存gcache, 更新DB時也要更新gcache
 
@@ -124,13 +124,16 @@ func main() {
 | Manager       | 200  | 由Admin建      |
 | Member        | 100  | 由Manager建    |
 
-## 帳號清單表
+## 帳號清單表 Accounts
+
+> 後續添加屬性欄位
 
 | 名稱     | datatype | 備註              |
 | -------- | -------- | ----------------- |
-| ID       | char     | PK / UUID  UNIQUE |
+| id       | char     | PK / UUID  UNIQUE |
 | username | char     | zxcvbn  UNIQUE    |
 | password | char     |                   |
+| email    | char     |                   |
 
 
 
@@ -146,6 +149,7 @@ func main() {
 | ---------- | ------ | ------------------------------------------------------------ |
 | `username` | string | Must be present and unique.                                  |
 | `password` | string | Must meet minimum complexity scoring per [zxcvbn](https://blogs.dropbox.com/tech/2012/04/zxcvbn-realistic-password-strength-estimation/). 後端會檢查是否符合規格, 通過後存SHA到DB |
+| email      | string |                                                              |
 | auth       | int    | 0~255. 數字越大權限越高                                      |
 
 `success`

@@ -18,6 +18,6 @@ func CheckPasswordStrength(pwd string) bool {
 
 // 密碼加密
 func Encryption(pwd string) string {
-	sum := sha256.Sum256([]byte("hello world0\n"))
+	sum := sha256.Sum256([]byte(pwd))
 	return fmt.Sprintf("%x", sum)
 }
