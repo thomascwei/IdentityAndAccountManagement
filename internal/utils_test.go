@@ -3,6 +3,7 @@ package internal
 import (
 	"IAM/pkg/cache"
 	"IAM/pkg/model"
+	"IAM/pkg/password"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"testing"
@@ -69,6 +70,116 @@ func TestLogout(t *testing.T) {
 	_, err = cache.CacheGet(token)
 	if err == nil {
 		t.Errorf("remove token fail")
+	}
+
+}
+
+func TestTokenverify(t *testing.T) {
+	username := "Admin"
+	password := "123456"
+	token, err := Login(username, password)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+	got, err := Tokenverify(token)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+	want := 255
+	if got != want {
+		t.Errorf("token verify error, auth got %v, want %v", got, want)
+	}
+}
+
+func TestGetAllAccount(t *testing.T) {
+	allAccounts, err := GetAllAccount()
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+	want := "admin@admin.com"
+	got := ""
+	for _, account := range allAccounts {
+		if account.Username == "Admin" {
+			got = account.Email
+		}
+	}
+	if got != want {
+		t.Errorf("email not match , got %v, want %v", got, want)
+	}
+}
+
+func TestUpdateSingelAccount(t *testing.T) {
+	fields := make(map[string]interface{})
+	fields["id"] = 1
+	fields["auth"] = 100
+
+	want := 100
+	var got int
+	err := UpdateSingelAccount(fields)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+	rows, err := db.Query("SELECT auth FROM accounts where id=1")
+	for rows.Next() {
+		err = rows.Scan(&got)
+	}
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if got != want {
+		t.Errorf("update fail, auth not match , got %v, want %v", got, want)
+	}
+	// 通過測試後改回原數據
+	fields["auth"] = 255
+	err = UpdateSingelAccount(fields)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+}
+
+func TestRenewPassword(t *testing.T) {
+	want := "1qaz@WSX3edcZ012"
+	err := RenewPassword(3, want)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+	var got string
+	rows, err := db.Query("SELECT password FROM accounts where id=3")
+	for rows.Next() {
+		err = rows.Scan(&got)
+	}
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if got != password.Encryption(want) {
+		t.Errorf("renew password fail, want: %v , got: %v", password.Encryption(want), got)
+	}
+
+}
+
+func TestInitPassword(t *testing.T) {
+	want := "123456"
+	err := InitPassword(3, want)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+	var got string
+	rows, err := db.Query("SELECT password FROM accounts where id=3")
+	for rows.Next() {
+		err = rows.Scan(&got)
+	}
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if got != password.Encryption(want) {
+		t.Errorf("renew password fail, want: %v , got: %v", password.Encryption(want), got)
 	}
 
 }

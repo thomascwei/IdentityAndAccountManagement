@@ -12,10 +12,10 @@ import (
 )
 
 type AccountFields struct {
-	id       int    `json:"id"`
-	username string `json:"username"`
-	email    string `json:"email"`
-	auth     int    `json:"auth"`
+	ID       int    `json:"ID"`
+	Username string `json:"username"`
+	Email    string `json:"Email"`
+	Auth     int    `json:"Auth"`
 }
 
 //type TokenValue struct {
@@ -31,7 +31,7 @@ var db, err = sql.Open("mysql", "root:123456@/iam?charset=utf8")
 
 func CreateAccounts(username, password, email string, auth int) (int64, error) {
 	password = pd.Encryption(password)
-	stmt, err := db.Prepare("INSERT accounts SET username=?,password=?,email=?,auth=?")
+	stmt, err := db.Prepare("INSERT accounts SET username=?,password=?,Email=?,Auth=?")
 	if err != nil {
 		return 0, err
 	}
@@ -55,7 +55,7 @@ func QueryAllAccounts() ([]AccountFields, error) {
 	for rows.Next() {
 		var account AccountFields
 		var pwd string
-		err := rows.Scan(&account.id, &account.username, &pwd, &account.email, &account.auth)
+		err := rows.Scan(&account.ID, &account.Username, &pwd, &account.Email, &account.Auth)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -66,7 +66,7 @@ func QueryAllAccounts() ([]AccountFields, error) {
 
 // 驗證帳號密碼, 通過返回true, 失敗返回false
 func VerifyPassword(username, password string) (bool, cache.TokenValue, error) {
-	rows, err := db.Query("SELECT id, auth, password FROM accounts where username='" + username + "'")
+	rows, err := db.Query("SELECT ID, Auth, password FROM accounts where username='" + username + "'")
 	if err != nil {
 		return false, cache.TokenValue{}, err
 	}
@@ -89,7 +89,7 @@ func VerifyPassword(username, password string) (bool, cache.TokenValue, error) {
 func UpdateAccount(params map[string]interface{}) error {
 	//編成prepare string
 	SetSection := " SET "
-	WhereClause := " where id =?"
+	WhereClause := " where ID =?"
 	args := make([]interface{}, 0)
 	iidd, ok := params["id"]
 	if !ok {
@@ -101,7 +101,7 @@ func UpdateAccount(params map[string]interface{}) error {
 			SetSection += k + "= ?,"
 			args = append(args, password.Encryption(v.(string)))
 		} else {
-			if k != "id" {
+			if k != "ID" {
 				SetSection += k + "= ?,"
 				args = append(args, v)
 			}
@@ -111,7 +111,7 @@ func UpdateAccount(params map[string]interface{}) error {
 	SetSection = SetSection[:len(SetSection)-1]
 	RawString := "update accounts "
 	RawString = RawString + SetSection + WhereClause
-	fmt.Println("update syntax", RawString)
+	//fmt.Println("update syntax", RawString)
 	stmt, err := db.Prepare(RawString)
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func UpdateAccount(params map[string]interface{}) error {
 
 func DeleteAccount(id int64) error {
 	//刪除資料
-	stmt, err := db.Prepare("delete from accounts where id=?")
+	stmt, err := db.Prepare("delete from accounts where ID=?")
 	if err != nil {
 		return err
 	}

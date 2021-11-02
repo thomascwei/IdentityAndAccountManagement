@@ -14,109 +14,9 @@
   
   部分DB數據也會存gcache, 更新DB時也要更新gcache
 
-Golang gcache使用
-
-  ```go
-  package main
-  
-  import (
-  	"fmt"
-  	"github.com/bluele/gcache"
-  	"time"
-  )
-  
-  type TokenValue struct {
-  	id   int
-  	auth int
-  }
-  
-  func main() {
-  	TokenID := "ABCDERTJFKLDD:D"
-  	Tokenvv := TokenValue{id: 1, auth: 200}
-      // New(20), 這個20參數名為size, 不明白真正用意. 實測設為1後塞1萬組正常可用
-  	gc := gcache.New(20).LRU().Build()
-  	// 設置token帶有效期限
-  	gc.SetWithExpire(TokenID, Tokenvv, time.Second*10)
-  	value, _ := gc.Get(TokenID)
-  	aa := value.(TokenValue)
-  	fmt.Println(aa.id)
-  	fmt.Println(aa.auth)
-  	// 移除token	
-     	gc.Remove("AAA9998")
-  	// 完全一樣的k,v 重新寫入(每當Token驗證成功就刷新該token的有效期)
-  	gc.SetWithExpire(TokenID, value, time.Second*10)
-  	// 可以正常取得
-  	time.Sleep(time.Second * 5)
-  	value1, _ := gc.Get(TokenID)
-  	bb := value1.(TokenValue)
-  	fmt.Println(bb.id)
-  	fmt.Println(bb.auth)
-  	value, err := gc.Get(TokenID)
-  	if err != nil {
-  		panic(err)
-  	}
-  	fmt.Println("bbGet:", value)
-  
-  	// 過期後無法取得
-  	time.Sleep(time.Second * 6)
-  	value2, err := gc.Get(TokenID)
-  	if err != nil {
-  		panic(err)
-  	}
-  	fmt.Println(TokenID, value2)
-  }
-  
-  ```
-
-Golang zxcvbn  強度檢查, 通過後轉將password轉成sha256字串存DB
-
-```go
-package main
-
-import (
-	"crypto/sha256"
-	"fmt"
-	"github.com/trustelem/zxcvbn"
-)
-
-func CheckPassword(pwd string) bool {
-	res := zxcvbn.PasswordStrength(pwd, nil)
-	// password is safe if the zxcvbn score is >= 3
-	if res.Score >= 3 {
-		return true
-	}
-	return false
-}
-func main() {
-	fmt.Println("Password: 1qaz!QAZdfgi#$gsg")
-	pass := CheckPassword("1qaz!QAZdfgi#$gsg")
-	if pass {
-		fmt.Println("test pass")
-		sum := sha256.Sum256([]byte("hello world0\n"))
-		myString := fmt.Sprintf("%x", sum)
-		fmt.Println("will save " + myString + " to DB")
-	} else {
-		fmt.Println("not pass")
-	}
-	fmt.Println("----------------------")
-	fmt.Println("Password: 1qaz!QAZ")
-	pass = CheckPassword("1qaz!QAZ")
-	fmt.Println(pass)
-	if pass {
-		fmt.Println("test pass")
-		sum := sha256.Sum256([]byte("hello world0\n"))
-		myString := fmt.Sprintf("%x", sum)
-		fmt.Println("will save " + myString + " to DB")
-	} else {
-		fmt.Println("not pass")
-	}
-}
-
-```
-
-
 
 ## 帳號模板權限表
+> 做在前端, 只要把權限值傳給後端保存即可
 
 | 角色 template | 權限 | 來源           |
 | ------------- | ---- | -------------- |
@@ -155,7 +55,6 @@ func main() {
 `success`
 
 ```json
-# return token
 {
   "result": {
     "id_token": "..."
@@ -200,7 +99,6 @@ todo
 `success`
 
 ```json
-# return token
 {
   "result": {
     "id_token": "..."
@@ -436,7 +334,6 @@ Token驗證 : Header add
 `success`
 
 ```json
-# 返回成功及權限
 {"result":"valid","auth":111}
 ```
 
