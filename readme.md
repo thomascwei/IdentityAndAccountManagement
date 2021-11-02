@@ -100,10 +100,10 @@ todo
 
 ```json
 {
-  "result": {
-    "id_token": "..."
-  }
+  "result": "ok",
+  "token": "..."
 }
+
 ```
 
 `fail`
@@ -111,13 +111,7 @@ todo
 ```json
 {
   "result":"fail",
-  "errors": [
-    {"field": "username", "message": "MISSING"},
-    {"field": "username", "message": "FORMAT_INVALID"},
-    {"field": "username", "message": "TAKEN"},
-    {"field": "password", "message": "MISSING"},
-    {"field": "password", "message": "INSECURE"}
-  ]
+  "error": "..."
 }
 ```
 
