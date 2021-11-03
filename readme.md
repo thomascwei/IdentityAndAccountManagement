@@ -67,13 +67,7 @@
 ```json
 {
   "result":"fail",
-  "errors": [
-    {"field": "username", "message": "MISSING"},
-    {"field": "username", "message": "FORMAT_INVALID"},
-    {"field": "username", "message": "TAKEN"},
-    {"field": "password", "message": "MISSING"},
-    {"field": "password", "message": "INSECURE"}
-  ]
+  "errors": "..."
 }
 ```
 
@@ -82,8 +76,8 @@
 
 todo
 
-- [ ] 將token保存並設定時效, key為token, value應該包含id, auth
-- [ ] 新建帳號的權限必須小於自己
+- [x] 新建帳號的權限必須小於自己
+- [ ] 某個權限以上才能用
 
 ### Login登入
 
@@ -117,14 +111,14 @@ todo
 
 todo
 
-- [ ] 將token保存並設定時效, key為token, value應該包含id, auth
-- [ ] 先刪除同帳號的token
+- [x] 將token保存並設定時效, key為token, value應該包含id, auth
+- [x] 先刪除同帳號的token
 
 ### Logout登出
 
 > 立馬移除此token
 
-  `GET /logout`
+  `GET /Logout`
 
 Token驗證 : Header add
 
@@ -138,14 +132,7 @@ Token驗證 : Header add
 {"result":"ok"}
 ```
 
-`fail`
-
-```json
-{
-  "result":"fail",
-  "errors": "token not exits"
-}
-```
+沒有失敗的情境, token不存在也不用回報錯誤
 
 
 

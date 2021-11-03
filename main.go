@@ -15,6 +15,8 @@ func main() {
 	r := gin.Default()
 
 	r.POST("/IAM/V1/Login", api.Login)
+	r.GET("/IAM/V1/Logout", api.Logout)
+	r.POST("/IAM/V1/create_account", api.SignUp)
 
 	r.Run(":9567")
 }

@@ -55,6 +55,7 @@ func Logout(token string) error {
 	}
 }
 
+// 確認token是否有效, 同時更新時效
 func Tokenverify(token string) (int, error) {
 	// 從cachek,v
 	value, err := cache.CacheGet(token)
