@@ -18,7 +18,7 @@ type AccountFields struct {
 	Auth     int    `json:"Auth"`
 }
 
-var db, err = sql.Open("mysql", "root:123456@/iam?charset=utf8")
+var db, err = sql.Open("mysql", "thomas:123456@/iam?charset=utf8")
 
 func CreateAccounts(username, password, email string, auth int) (int64, error) {
 	password = pd.Encryption(password)
