@@ -9,7 +9,8 @@ import (
 	"testing"
 )
 
-var db, err = sql.Open("mysql", "root:123456@/iam?charset=utf8")
+//var db, err = sql.Open("mysql", "root:123456@/iam?charset=utf8")
+var db, err = sql.Open("mysql", "thomas:123456@/iam?charset=utf8")
 
 func TestSignUp(t *testing.T) {
 	username := "test!!!"
