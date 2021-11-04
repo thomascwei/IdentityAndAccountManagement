@@ -56,17 +56,17 @@ func Logout(token string) error {
 }
 
 // 確認token是否有效, 同時更新時效
-func Tokenverify(token string) (int, error) {
+func Tokenverify(token string) (int, int, error) {
 	// 從cachek,v
 	value, err := cache.CacheGet(token)
 	// cache取不到返回失敗
 	if err != nil {
-		return -1, err
+		return -1, -1, err
 	}
 	// 更新token時效
 	cache.SetWithExpire(token, value, 300)
 
-	return value.(cache.TokenValue).Auth, nil
+	return value.(cache.TokenValue).Id, value.(cache.TokenValue).Auth, nil
 }
 
 // 取得所有帳號信息, 除了密碼
@@ -81,9 +81,9 @@ func GetAllAccount() ([]model.AccountFields, error) {
 // 更新帳號內容
 func UpdateSingelAccount(params map[string]interface{}) error {
 	// 改密碼要用RenewPassword, map裡如果有password先移除
-	_, ok := params["password"]
+	_, ok := params["Password"]
 	if ok {
-		delete(params, "password")
+		delete(params, "Password")
 	}
 	err := model.UpdateAccount(params)
 	if err != nil {
@@ -92,16 +92,16 @@ func UpdateSingelAccount(params map[string]interface{}) error {
 	return nil
 }
 
-// 更新密碼
-func RenewPassword(id int, password string) error {
+// 改密碼
+func ChangePassword(id int, password string) error {
 	// 檢查密碼強度
 	ok := pd.CheckPasswordStrength(password)
 	if !ok {
 		return errors.New("password is not strong enough")
 	}
 	params := make(map[string]interface{})
-	params["id"] = id
-	params["password"] = password
+	params["Id"] = id
+	params["Password"] = password
 	err := model.UpdateAccount(params)
 	if err != nil {
 		return err
@@ -113,8 +113,8 @@ func RenewPassword(id int, password string) error {
 // admin初始化密碼專用,不檢查密碼強度
 func InitPassword(id int, password string) error {
 	params := make(map[string]interface{})
-	params["id"] = id
-	params["password"] = password
+	params["Id"] = id
+	params["Password"] = password
 	err := model.UpdateAccount(params)
 	if err != nil {
 		return err

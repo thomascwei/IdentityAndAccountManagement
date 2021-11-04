@@ -12,7 +12,7 @@ import (
 var db, err = sql.Open("mysql", "root:123456@/iam?charset=utf8")
 
 func TestSignUp(t *testing.T) {
-	username := "test"
+	username := "test!!!"
 	password := "test1231qaz!QAZ"
 	email := "test@example.com"
 	auth := 123
@@ -22,7 +22,7 @@ func TestSignUp(t *testing.T) {
 		t.Errorf(err.Error())
 		return
 	}
-	rows, err := db.Query("SELECT id FROM accounts where username='test'")
+	rows, err := db.Query("SELECT id FROM accounts where username='test!!!'")
 
 	var want int64
 	for rows.Next() {
@@ -82,7 +82,7 @@ func TestTokenverify(t *testing.T) {
 		t.Errorf(err.Error())
 		return
 	}
-	got, err := Tokenverify(token)
+	_, got, err := Tokenverify(token)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -113,7 +113,7 @@ func TestGetAllAccount(t *testing.T) {
 
 func TestUpdateSingelAccount(t *testing.T) {
 	fields := make(map[string]interface{})
-	fields["id"] = 1
+	fields["Id"] = 1
 	fields["auth"] = 100
 
 	want := 100
@@ -144,7 +144,7 @@ func TestUpdateSingelAccount(t *testing.T) {
 
 func TestRenewPassword(t *testing.T) {
 	want := "1qaz@WSX3edcZ012"
-	err := RenewPassword(3, want)
+	err := ChangePassword(3, want)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -179,7 +179,7 @@ func TestInitPassword(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 	if got != password.Encryption(want) {
-		t.Errorf("renew password fail, want: %v , got: %v", password.Encryption(want), got)
+		t.Errorf("init password fail, want: %v , got: %v", password.Encryption(want), got)
 	}
 
 }

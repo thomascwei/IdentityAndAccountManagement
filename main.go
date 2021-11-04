@@ -17,6 +17,10 @@ func main() {
 	r.POST("/IAM/V1/Login", api.Login)
 	r.GET("/IAM/V1/Logout", api.Logout)
 	r.POST("/IAM/V1/create_account", api.SignUp)
+	r.GET("/IAM/V1/all_accounts", api.GetAllAccount)
+	r.POST("/IAM/V1/account_update", api.AccountUpdate)
+	r.POST("/IAM/V1/change_password", api.ChangePassword)
+	r.POST("/IAM/V1/init_password", api.InitPassword)
 
 	r.Run(":9567")
 }

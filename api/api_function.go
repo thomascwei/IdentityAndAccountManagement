@@ -2,6 +2,8 @@ package api
 
 import (
 	"IAM/internal"
+	"fmt"
+	"github.com/fatih/structs"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -9,10 +11,16 @@ import (
 )
 
 type User struct {
+	Id       int    `json:"id"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Email    string `json:"email"`
 	Auth     int    `json:"auth"`
+}
+
+type changePassword struct {
+	Id          int    `json:"id"`
+	NewPassword string `json:"new_password"`
 }
 
 type login struct {
@@ -22,13 +30,13 @@ type login struct {
 
 type YamlConfig struct {
 	API struct {
-		SignUp int `yaml:"signUp"`
-		Logout int `yaml:"logout"`
+		SignUp        int `yaml:"signUp"`
+		Logout        int `yaml:"logout"`
+		GetAllAccount int `yaml:"getAllAccount"`
+		Update        int `yaml:"updata"`
+		InitPassword  int `yaml:"initpassword"`
 	} `yaml:"api"`
 }
-
-var CC YamlConfig
-var CConfig = CC.getConf()
 
 func (y *YamlConfig) getConf() *YamlConfig {
 	yamlFile, err := ioutil.ReadFile("api/config.yaml")
@@ -43,18 +51,20 @@ func (y *YamlConfig) getConf() *YamlConfig {
 	return y
 }
 
+var CC YamlConfig
+var CConfig = CC.getConf()
+
 // 建立帳戶
 func SignUp(c *gin.Context) {
-
-	// 找出token
+	// 找出header裡的token
 	token := ""
 	for k, v := range c.Request.Header {
 		if k == "Authorization" {
 			token = v[0]
 		}
 	}
-	// 找出此token的Auth
-	auth, err := internal.Tokenverify(token)
+	// 確認token有效並得到此token的auth
+	_, auth, err := internal.Tokenverify(token)
 	if err != nil {
 		c.JSON(200, gin.H{
 			"result": "fail",
@@ -62,7 +72,7 @@ func SignUp(c *gin.Context) {
 		})
 		return
 	}
-	// 確認此token有使用此API的權限
+	// 確認有使用此API的權限
 	if auth < CConfig.API.SignUp {
 		c.JSON(200, gin.H{
 			"result": "fail",
@@ -82,10 +92,10 @@ func SignUp(c *gin.Context) {
 		return
 	}
 	// 確認新帳號權限小於自身帳號
-	if auth < input.Auth {
+	if auth <= input.Auth {
 		c.JSON(200, gin.H{
 			"result": "fail",
-			"error":  "you cannot create authority higher than your self",
+			"error":  "you cannot create authority higher than or equal to yourself",
 		})
 		return
 	}
@@ -98,6 +108,7 @@ func SignUp(c *gin.Context) {
 		})
 		return
 	}
+	internal.Tokenverify(token)
 	c.JSON(200, gin.H{
 		"result": "ok",
 		"id":     id,
@@ -105,8 +116,8 @@ func SignUp(c *gin.Context) {
 	return
 }
 
+// 登入
 func Login(c *gin.Context) {
-
 	m := login{}
 	err := c.Bind(&m)
 	if err != nil {
@@ -116,6 +127,7 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
+	// 檢查request body轉type後是否少欄位
 	if m.Username == "" || m.Password == "" {
 		c.JSON(200, gin.H{
 			"result": "fail",
@@ -138,6 +150,7 @@ func Login(c *gin.Context) {
 	return
 }
 
+// 登出
 func Logout(c *gin.Context) {
 	// 找出token
 	token := ""
@@ -151,6 +164,204 @@ func Logout(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"result": "ok",
 	})
+}
 
-	return
+// 取得帳號戶清單及內容
+func GetAllAccount(c *gin.Context) {
+	// 找出header裡的token
+	token := ""
+	for k, v := range c.Request.Header {
+		if k == "Authorization" {
+			token = v[0]
+		}
+	}
+	// 確認token有效並得到此token的auth
+	_, auth, err := internal.Tokenverify(token)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  "token error, " + err.Error(),
+		})
+		return
+	}
+	// 確認有使用此API的權限
+	if auth < CConfig.API.GetAllAccount {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  "not authorized",
+		})
+		return
+	}
+	result, err := internal.GetAllAccount()
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  "error, " + err.Error(),
+		})
+		return
+	}
+	internal.Tokenverify(token)
+	c.JSON(200, gin.H{
+		"result":   "ok",
+		"accounts": result,
+	})
+}
+
+// 更新帳戶內容
+func AccountUpdate(c *gin.Context) {
+	// 找出header裡的token
+	token := ""
+	for k, v := range c.Request.Header {
+		if k == "Authorization" {
+			token = v[0]
+		}
+	}
+	// 確認token有效並得到此token的auth
+	_, auth, err := internal.Tokenverify(token)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  "token error, " + err.Error(),
+		})
+		return
+	}
+	// 確認有使用此API的權限
+	if auth < CConfig.API.Update {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  "not authorized",
+		})
+		return
+	}
+	// 讀request body
+	input := User{}
+	err = c.BindJSON(&input)
+	fmt.Println("user:", input)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  err.Error(),
+		})
+		return
+	}
+	// 新權限必須小於此token
+	if input.Auth >= auth {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  "auth too high",
+		})
+		return
+	}
+	// 轉成map
+	UserMap := structs.Map(input)
+	// 刪除password, 密碼要在其他API單獨改
+	delete(UserMap, "Password")
+	fmt.Println("UserMap:", UserMap)
+	err = internal.UpdateSingelAccount(UserMap)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  err.Error(),
+		})
+		return
+	}
+	internal.Tokenverify(token)
+	c.JSON(200, gin.H{
+		"result": "ok",
+	})
+}
+
+// 改自己的密碼
+func ChangePassword(c *gin.Context) {
+	// 找出header裡的token
+	token := ""
+	for k, v := range c.Request.Header {
+		if k == "Authorization" {
+			token = v[0]
+		}
+	}
+	// 確認token有效並得到此token的auth
+	id, _, err := internal.Tokenverify(token)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  "token error, " + err.Error(),
+		})
+		return
+	}
+	// 讀request body
+	input := changePassword{}
+	err = c.BindJSON(&input)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  err.Error(),
+		})
+		return
+	}
+	err = internal.ChangePassword(id, input.NewPassword)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  err.Error(),
+		})
+		return
+	}
+	internal.Tokenverify(token)
+	c.JSON(200, gin.H{
+		"result": "ok",
+	})
+
+}
+
+// 初始化密碼(忘記密碼時使用)
+func InitPassword(c *gin.Context) {
+	// 找出header裡的token
+	token := ""
+	for k, v := range c.Request.Header {
+		if k == "Authorization" {
+			token = v[0]
+		}
+	}
+	// 確認token有效並得到此token的auth
+	_, auth, err := internal.Tokenverify(token)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  "token error, " + err.Error(),
+		})
+		return
+	}
+	// 確認有使用此API的權限
+	if auth < CConfig.API.InitPassword {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  "not authorized",
+		})
+		return
+	}
+	// 讀request body
+	input := changePassword{}
+	err = c.BindJSON(&input)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  err.Error(),
+		})
+		return
+	}
+	err = internal.InitPassword(input.Id, input.NewPassword)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result": "fail",
+			"error":  err.Error(),
+		})
+		return
+	}
+	// 更新token時效
+	internal.Tokenverify(token)
+	c.JSON(200, gin.H{
+		"result": "ok",
+	})
+
 }

@@ -18,11 +18,6 @@ type AccountFields struct {
 	Auth     int    `json:"Auth"`
 }
 
-//type TokenValue struct {
-//	Id   int
-//	Auth int
-//}
-
 func checkErr(err error) error {
 	return err
 }
@@ -91,17 +86,19 @@ func UpdateAccount(params map[string]interface{}) error {
 	SetSection := " SET "
 	WhereClause := " where ID =?"
 	args := make([]interface{}, 0)
-	iidd, ok := params["id"]
+	iidd, ok := params["Id"]
 	if !ok {
-		return fmt.Errorf("id column not found")
+		return fmt.Errorf("Id column not found")
 	}
 
 	for k, v := range params {
-		if k == "password" {
+		if k == "Password" {
 			SetSection += k + "= ?,"
 			args = append(args, password.Encryption(v.(string)))
+			//fmt.Println("args0: ", args)
+
 		} else {
-			if k != "ID" {
+			if k != "Id" {
 				SetSection += k + "= ?,"
 				args = append(args, v)
 			}
@@ -111,11 +108,12 @@ func UpdateAccount(params map[string]interface{}) error {
 	SetSection = SetSection[:len(SetSection)-1]
 	RawString := "update accounts "
 	RawString = RawString + SetSection + WhereClause
-	//fmt.Println("update syntax", RawString)
+	//fmt.Println("update syntax: ", RawString)
 	stmt, err := db.Prepare(RawString)
 	if err != nil {
 		return err
 	}
+	//fmt.Println("args1: ", args)
 	_, err = stmt.Exec(args...)
 	if err != nil {
 		return err

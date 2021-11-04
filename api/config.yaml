@@ -1,3 +1,6 @@
 api:
   signUp: 200
   logout: 1
+  getAllAccount: 200
+  update: 200
+  initpassword: 200

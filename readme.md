@@ -77,7 +77,7 @@
 todo
 
 - [x] 新建帳號的權限必須小於自己
-- [ ] 某個權限以上才能用
+- [x] 某個權限以上才能用
 
 ### Login登入
 
@@ -171,14 +171,14 @@ Token驗證 : Header add
 
 todo
 
-- [ ] 驗證token是否存在及查詢權限
-- [ ] 更新token時效
+- [x] 驗證token是否存在及查詢權限
+- [x] 更新token時效
 
 ### Update
 
-> 更新權限及其他個人內容
+> 更新帳戶內容
 
-`post /update`
+`post /account_update`
 
 Token驗證 : Header add
 
@@ -203,13 +203,7 @@ Token驗證 : Header add
 ```json
 {
   "result":"fail",
-  "errors": [
-    {"field": "username", "message": "MISSING"},
-    {"field": "username", "message": "FORMAT_INVALID"},
-    {"field": "username", "message": "TAKEN"},
-    {"field": "password", "message": "MISSING"},
-    {"field": "password", "message": "INSECURE"}
-  ]
+  "errors": "..."
 }
 ```
 
@@ -217,13 +211,15 @@ Token驗證 : Header add
 
 todo
 
-- [ ] 驗證token是否存在及查詢id是否為本人
-- [ ] 更新token時效
-- [ ] 更新後的權限必須小於當下token
+- [x] 驗證token是否存在及查詢id是否為本人
+- [x] 更新token時效
+- [x] 更新後的權限必須小於當下token
 
 ### Change Password
 
-`POST /password`
+> 改自己的密碼
+
+`POST /change_password`
 
 Token驗證 : Header add
 
@@ -261,14 +257,14 @@ Token驗證 : Header add
 
 todo
 
-- [ ] 驗證token是否存在及查詢id是否為本人
-- [ ] 更新token時效
+- [x] 從token查詢id
+- [x] 更新token時效
 
 ### 初始化密碼(忘記密碼)
 
 > 管理員專用,給重設一組任意密碼
 
-`POST /initpassword`
+`POST /init_password`
 
 Token驗證 : Header add
 
