@@ -11,6 +11,7 @@ import (
 
 var db, err = sql.Open("mysql", "thomas:123456@/iam?charset=utf8")
 var _, _ = db.Exec("CREATE TABLE IF NOT EXISTS `accounts`\n(\n    `id`       int          NOT NULL AUTO_INCREMENT,\n    `username` VARCHAR(30)  NOT NULL,\n    `password` VARCHAR(100) NOT NULL,\n    `email`    VARCHAR(50)  not NULL,\n    `auth`     INT          not NULL,\n    UNIQUE (`username`),\n    PRIMARY KEY (`id`)\n);")
+var _, _ = db.Exec("INSERT accounts\nSET username='Admin',\n    password='8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92',\n    Email='admin@admin.com',\n    Auth=255;")
 
 func TestSignUp(t *testing.T) {
 	username := "test!!!"
