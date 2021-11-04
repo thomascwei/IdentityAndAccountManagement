@@ -17,6 +17,7 @@ jobs:
       uses: shogo82148/actions-setup-mysql@v1.3.2
       with:
         root-password: 123456
+        mysql database: 'iam'
 
     - name: Set up Go
       uses: actions/setup-go@v2
