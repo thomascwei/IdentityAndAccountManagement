@@ -13,22 +13,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up MySQL
-      uses: shogo82148/actions-setup-mysql@v1
-      with:
-        mysql-version: '8.0'
-        mysql root password: 123456
-        mysql database: 'iam'
-      run: mysql -u(root) -p(123456) (iam)-e "CREATE TABLE IF NOT EXISTS `accounts`
-        (
-        `id`       int          NOT NULL AUTO_INCREMENT,
-        `username` VARCHAR(30)  NOT NULL,
-        `password` VARCHAR(100) NOT NULL,
-        `email`    VARCHAR(50)  not NULL,
-        `auth`     INT          not NULL,
-        UNIQUE (`username`),
-        PRIMARY KEY (`id`)
-        );"
+    - name: actions-setup-mysql
+      uses: shogo82148/actions-setup-mysql@v1.3.2
+
 
 
     - name: Set up Go
