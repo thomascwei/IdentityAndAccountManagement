@@ -19,22 +19,10 @@ jobs:
         mysql database: 'iam'
         mysql user: 'thomas'
         mysql password: 123456
-    - name: SQL init
-      run: mysql -u root iam -e "CREATE TABLE IF NOT EXISTS 'accounts'
-        (
-        'id'       int          NOT NULL AUTO_INCREMENT,
-        'username' VARCHAR(30)  NOT NULL,
-        'password' VARCHAR(100) NOT NULL,
-        'email'    VARCHAR(50)  not NULL,
-        'auth'     INT          not NULL,
-        UNIQUE ('username'),
-        PRIMARY KEY ('id')
-        );
-        INSERT accounts
-        SET username='Admin',
-        password='8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92',
-        Email='admin@admin.com',
-        Auth=255;"
+    - run: |
+        mysql -e 'CREATE DATABASE wordpress_test;' -uroot -proot
+        mysql -e 'SHOW DATABASES;' -uroot -proot
+
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
