@@ -54,6 +54,13 @@ func (y *YamlConfig) getConf() *YamlConfig {
 var CC YamlConfig
 var CConfig = CC.getConf()
 
+func ReturnError(c *gin.Context, info string) {
+	c.JSON(200, gin.H{
+		"result": "fail",
+		"error":  info,
+	})
+}
+
 // 建立帳戶
 func SignUp(c *gin.Context) {
 	// 找出header裡的token
@@ -121,26 +128,17 @@ func Login(c *gin.Context) {
 	m := login{}
 	err := c.Bind(&m)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	// 檢查request body轉type後是否少欄位
 	if m.Username == "" || m.Password == "" {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "request body format error",
-		})
+		ReturnError(c, "request body format error")
 		return
 	}
 	token, err := internal.Login(m.Username, m.Password)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	c.JSON(200, gin.H{
@@ -178,26 +176,17 @@ func GetAllAccount(c *gin.Context) {
 	// 確認token有效並得到此token的auth
 	_, auth, err := internal.Tokenverify(token)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "token error, " + err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	// 確認有使用此API的權限
 	if auth < CConfig.API.GetAllAccount {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "not authorized",
-		})
+		ReturnError(c, "not authorized")
 		return
 	}
 	result, err := internal.GetAllAccount()
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "error, " + err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	internal.Tokenverify(token)
@@ -219,18 +208,12 @@ func AccountUpdate(c *gin.Context) {
 	// 確認token有效並得到此token的auth
 	_, auth, err := internal.Tokenverify(token)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "token error, " + err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	// 確認有使用此API的權限
 	if auth < CConfig.API.Update {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "not authorized",
-		})
+		ReturnError(c, "not authorized")
 		return
 	}
 	// 讀request body
@@ -238,18 +221,12 @@ func AccountUpdate(c *gin.Context) {
 	err = c.BindJSON(&input)
 	fmt.Println("user:", input)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	// 新權限必須小於此token
 	if input.Auth >= auth {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "auth too high",
-		})
+		ReturnError(c, "auth too high")
 		return
 	}
 	// 轉成map
@@ -259,10 +236,7 @@ func AccountUpdate(c *gin.Context) {
 	fmt.Println("UserMap:", UserMap)
 	err = internal.UpdateSingelAccount(UserMap)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	internal.Tokenverify(token)
@@ -283,28 +257,19 @@ func ChangePassword(c *gin.Context) {
 	// 確認token有效並得到此token的auth
 	id, _, err := internal.Tokenverify(token)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "token error, " + err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	// 讀request body
 	input := changePassword{}
 	err = c.BindJSON(&input)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	err = internal.ChangePassword(id, input.NewPassword)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	internal.Tokenverify(token)
@@ -326,36 +291,24 @@ func InitPassword(c *gin.Context) {
 	// 確認token有效並得到此token的auth
 	_, auth, err := internal.Tokenverify(token)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "token error, " + err.Error(),
-		})
+		ReturnError(c, "token error, "+err.Error())
 		return
 	}
 	// 確認有使用此API的權限
 	if auth < CConfig.API.InitPassword {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "not authorized",
-		})
+		ReturnError(c, "not authorized")
 		return
 	}
 	// 讀request body
 	input := changePassword{}
 	err = c.BindJSON(&input)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	err = internal.InitPassword(input.Id, input.NewPassword)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  err.Error(),
-		})
+		ReturnError(c, err.Error())
 		return
 	}
 	// 更新token時效

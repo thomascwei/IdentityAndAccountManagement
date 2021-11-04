@@ -77,7 +77,7 @@ func VerifyPassword(username, password string) (bool, cache.TokenValue, error) {
 	if pd.Encryption(password) == pwd {
 		return true, tokenvalue, nil
 	}
-	return false, cache.TokenValue{}, errors.New("password invalid")
+	return false, cache.TokenValue{}, errors.New("account password invalid")
 }
 
 // 可接受部分欄位變更
