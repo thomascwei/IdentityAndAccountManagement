@@ -18,10 +18,6 @@ type AccountFields struct {
 	Auth     int    `json:"Auth"`
 }
 
-func checkErr(err error) error {
-	return err
-}
-
 var db, err = sql.Open("mysql", "root:123456@/iam?charset=utf8")
 
 func CreateAccounts(username, password, email string, auth int) (int64, error) {
