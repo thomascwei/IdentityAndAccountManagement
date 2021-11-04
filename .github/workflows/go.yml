@@ -17,8 +17,7 @@ jobs:
       uses: shogo82148/actions-setup-mysql@v1.3.2
       with:
         root-password: 123456
-        mysql database: 'iam'
-
+    - run: mysql -u(root) -p(123456) -e 'CREATE DATABASE IF NOT EXISTS `iam`'
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
