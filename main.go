@@ -2,10 +2,9 @@ package main
 
 import (
 	"IAM/api"
+	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
-	//"net/http"
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
