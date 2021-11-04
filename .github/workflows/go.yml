@@ -10,18 +10,13 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
 
-    - name: actions-setup-mysql
-      uses: mirromutth/mysql-action@v1.1
-      with:
-        mysql database: 'iam'
-        mysql user: 'thomas'
-        mysql password: 123456
-    - run: |
-        mysql -e 'CREATE DATABASE wordpress_test;' -uroot -proot
-        mysql -e 'SHOW DATABASES;' -uroot -proot
+    steps:
+      - run: |
+          sudo /etc/init.d/mysql start
+          mysql -e 'CREATE DATABASE iam;' -uroot -proot
+          mysql -e 'SHOW DATABASES;' -uroot -proot
+    - uses: actions/checkout@v2
 
     - name: Set up Go
       uses: actions/setup-go@v2
