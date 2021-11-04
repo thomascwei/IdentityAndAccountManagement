@@ -56,9 +56,8 @@
 
 ```json
 {
-  "result": {
-    "id_token": "..."
-  }
+    "id": 80,
+    "result": "ok"
 }
 ```
 
@@ -295,30 +294,4 @@ Token驗證 : Header add
 ```
 
 
-
-### Token驗證
-
-> 給其他API驗證token
-
-`GET /tokenverify`
-
-Token驗證 : Header add
-
-```json
-{"Authorization":"your-token"}
-```
-
-`success`
-
-```json
-{"result":"valid","auth":111}
-```
-
-`fail`
-
-```json
-{"result":"invalid"}
-```
-
-- [ ] 更新token時效
 
