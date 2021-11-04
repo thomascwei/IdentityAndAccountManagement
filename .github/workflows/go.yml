@@ -15,7 +15,7 @@ jobs:
       - run: |
           sudo /etc/init.d/mysql start
           mysql -e 'CREATE DATABASE iam;' -uroot -proot
-          mysql -e 'SHOW DATABASES;' -uroot -proot
+
     - uses: actions/checkout@v2
 
     - name: Set up Go
