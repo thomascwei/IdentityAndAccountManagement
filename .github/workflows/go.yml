@@ -20,15 +20,15 @@ jobs:
         mysql user: 'thomas'
         mysql password: 123456
     - name: SQL init
-      run: mysql -u root iam -e "CREATE TABLE IF NOT EXISTS `accounts`
+      run: mysql -u root iam -e "CREATE TABLE IF NOT EXISTS 'accounts'
         (
-        `id`       int          NOT NULL AUTO_INCREMENT,
-        `username` VARCHAR(30)  NOT NULL,
-        `password` VARCHAR(100) NOT NULL,
-        `email`    VARCHAR(50)  not NULL,
-        `auth`     INT          not NULL,
-        UNIQUE (`username`),
-        PRIMARY KEY (`id`)
+        'id'       int          NOT NULL AUTO_INCREMENT,
+        'username' VARCHAR(30)  NOT NULL,
+        'password' VARCHAR(100) NOT NULL,
+        'email'    VARCHAR(50)  not NULL,
+        'auth'     INT          not NULL,
+        UNIQUE ('username'),
+        PRIMARY KEY ('id')
         );
         INSERT accounts
         SET username='Admin',
