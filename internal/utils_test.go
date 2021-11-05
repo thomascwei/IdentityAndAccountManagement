@@ -153,7 +153,7 @@ func TestRenewPassword(t *testing.T) {
 		return
 	}
 	var got string
-	rows, err := db.Query("SELECT password FROM accounts where id=3")
+	rows, err := db.Query("SELECT password FROM accounts where id=2")
 	for rows.Next() {
 		err = rows.Scan(&got)
 	}
@@ -174,7 +174,7 @@ func TestInitPassword(t *testing.T) {
 		return
 	}
 	var got string
-	rows, err := db.Query("SELECT password FROM accounts where id=3")
+	rows, err := db.Query("SELECT password FROM accounts where id=2")
 	for rows.Next() {
 		err = rows.Scan(&got)
 	}
