@@ -2,16 +2,11 @@ package main
 
 import (
 	"IAM/api"
-	"IAM/internal"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
-	"log"
 )
 
 func main() {
-	internal.SignUp("Admin", "123456", "", 255)
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-
 	//以Gin框架起一個post接收數據, 收到後塞進該點位的專屬channel
 	r := gin.Default()
 
