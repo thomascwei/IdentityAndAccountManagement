@@ -6,8 +6,11 @@ import (
 	"github.com/fatih/structs"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v2"
+	"io"
 	"io/ioutil"
 	"log"
+	"os"
+	"strconv"
 )
 
 type User struct {
@@ -33,7 +36,7 @@ type YamlConfig struct {
 		SignUp        int `yaml:"signUp"`
 		Logout        int `yaml:"logout"`
 		GetAllAccount int `yaml:"getAllAccount"`
-		Update        int `yaml:"updata"`
+		Update        int `yaml:"update"`
 		InitPassword  int `yaml:"initpassword"`
 	} `yaml:"api"`
 }
@@ -53,8 +56,15 @@ func (y *YamlConfig) getConf() *YamlConfig {
 
 var CC YamlConfig
 var CConfig = CC.getConf()
+var (
+	file, _ = os.OpenFile("./log/RouteFunctions.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	//Trace   = log.New(os.Stdout, "TRACE: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Info = log.New(io.MultiWriter(file, os.Stdout), "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	//Error   = log.New(io.MultiWriter(file, os.Stdout), "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+)
 
 func ReturnError(c *gin.Context, info string) {
+	Info.Println(info)
 	c.JSON(200, gin.H{
 		"result": "fail",
 		"error":  info,
@@ -115,7 +125,7 @@ func SignUp(c *gin.Context) {
 		})
 		return
 	}
-	internal.Tokenverify(token)
+	_, _, _ = internal.Tokenverify(token)
 	c.JSON(200, gin.H{
 		"result": "ok",
 		"id":     id,
@@ -145,6 +155,7 @@ func Login(c *gin.Context) {
 		"result": "ok",
 		"token":  token,
 	})
+	Info.Println(m.Username, "login successfully")
 	return
 }
 
@@ -158,7 +169,7 @@ func Logout(c *gin.Context) {
 		}
 	}
 	// 刪除token, 不管是否存在
-	internal.Logout(token)
+	_ = internal.Logout(token)
 	c.JSON(200, gin.H{
 		"result": "ok",
 	})
@@ -189,7 +200,7 @@ func GetAllAccount(c *gin.Context) {
 		ReturnError(c, err.Error())
 		return
 	}
-	internal.Tokenverify(token)
+	_, _, _ = internal.Tokenverify(token)
 	c.JSON(200, gin.H{
 		"result":   "ok",
 		"accounts": result,
@@ -206,14 +217,15 @@ func AccountUpdate(c *gin.Context) {
 		}
 	}
 	// 確認token有效並得到此token的auth
-	_, auth, err := internal.Tokenverify(token)
+	id, auth, err := internal.Tokenverify(token)
 	if err != nil {
 		ReturnError(c, err.Error())
 		return
 	}
+
 	// 確認有使用此API的權限
 	if auth < CConfig.API.Update {
-		ReturnError(c, "not authorized")
+		ReturnError(c, "ID:"+strconv.Itoa(id)+" not authorized")
 		return
 	}
 	// 讀request body
@@ -239,7 +251,7 @@ func AccountUpdate(c *gin.Context) {
 		ReturnError(c, err.Error())
 		return
 	}
-	internal.Tokenverify(token)
+	_, _, _ = internal.Tokenverify(token)
 	c.JSON(200, gin.H{
 		"result": "ok",
 	})
@@ -272,7 +284,7 @@ func ChangePassword(c *gin.Context) {
 		ReturnError(c, err.Error())
 		return
 	}
-	internal.Tokenverify(token)
+	_, _, _ = internal.Tokenverify(token)
 	c.JSON(200, gin.H{
 		"result": "ok",
 	})
@@ -312,7 +324,7 @@ func InitPassword(c *gin.Context) {
 		return
 	}
 	// 更新token時效
-	internal.Tokenverify(token)
+	_, _, _ = internal.Tokenverify(token)
 	c.JSON(200, gin.H{
 		"result": "ok",
 	})

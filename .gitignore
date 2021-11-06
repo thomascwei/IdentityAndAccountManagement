@@ -1,6 +1,6 @@
 
 **/__pycache__/
-**/logs/
+**/log/
 **/temp/
 .idea/
 *.iml
