@@ -2,11 +2,12 @@ package main
 
 import (
 	"IAM/api"
-	"github.com/gin-gonic/gin"
-	_ "github.com/go-sql-driver/mysql"
 	"io"
 	"log"
 	"os"
+
+	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
@@ -38,6 +39,7 @@ func main() {
 	r.POST("/IAM/V1/account_update", api.AccountUpdate)
 	r.POST("/IAM/V1/change_password", api.ChangePassword)
 	r.POST("/IAM/V1/init_password", api.InitPassword)
+	r.GET("/IAM/V1/token_verify", api.Tokenverify)
 
 	r.Run(":9567")
 }

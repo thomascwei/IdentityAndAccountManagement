@@ -3,14 +3,15 @@ package api
 import (
 	"IAM/internal"
 	"fmt"
-	"github.com/fatih/structs"
-	"github.com/gin-gonic/gin"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/fatih/structs"
+	"github.com/gin-gonic/gin"
+	"gopkg.in/yaml.v2"
 )
 
 type User struct {
@@ -329,4 +330,24 @@ func InitPassword(c *gin.Context) {
 		"result": "ok",
 	})
 
+}
+
+// 確認token是否有效
+func Tokenverify(c *gin.Context) {
+	// 找出header裡的token
+	token := ""
+	for k, v := range c.Request.Header {
+		if k == "Authorization" {
+			token = v[0]
+		}
+	}
+	// 確認token有效並得到此token的auth
+	_, _, err := internal.Tokenverify(token)
+	if err != nil {
+		ReturnError(c, "token error, "+err.Error())
+		return
+	}
+	c.JSON(200, gin.H{
+		"result": "ok",
+	})
 }
