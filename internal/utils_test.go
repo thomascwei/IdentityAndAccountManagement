@@ -38,7 +38,7 @@ func TestSignUp(t *testing.T) {
 		t.Errorf("ID mismatch, create account fail")
 	}
 
-	model.DeleteAccount(got)
+	model.DeleteAccount(int32(got))
 }
 
 func TestLogin(t *testing.T) {
@@ -117,8 +117,9 @@ func TestGetAllAccount(t *testing.T) {
 func TestUpdateSingelAccount(t *testing.T) {
 	fields := make(map[string]interface{})
 	fields["Id"] = 1
-	fields["auth"] = 100
-
+	fields["Auth"] = 100
+	fields["Username"] = "Admin"
+	fields["Email"] = "admin@admin.com"
 	want := 100
 	var got int
 	err := UpdateSingelAccount(fields)
@@ -137,7 +138,7 @@ func TestUpdateSingelAccount(t *testing.T) {
 		t.Errorf("update fail, auth not match , got %v, want %v", got, want)
 	}
 	// 通過測試後改回原數據
-	fields["auth"] = 255
+	fields["Auth"] = 255
 	err = UpdateSingelAccount(fields)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -147,7 +148,7 @@ func TestUpdateSingelAccount(t *testing.T) {
 
 func TestRenewPassword(t *testing.T) {
 	want := "1qaz@WSX3edcZ012"
-	err := ChangePassword(2, want)
+	err := ChangeSelfPassword(2, want)
 	if err != nil {
 		t.Errorf(err.Error())
 		return

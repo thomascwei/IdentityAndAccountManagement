@@ -1,0 +1,9 @@
+version: 1
+packages:
+  - path: "pkg/db"
+    name: "db"
+    engine: "mysql"
+    schema: "script/schema.sql"
+    queries: "script/query.sql"
+    emit_json_tags: true
+    emit_prepared_queries: true

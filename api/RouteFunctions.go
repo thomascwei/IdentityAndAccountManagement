@@ -101,6 +101,7 @@ func SignUp(c *gin.Context) {
 	// 讀request body
 	input := User{}
 	err = c.BindJSON(&input)
+	fmt.Println(104, input.Auth)
 	if err != nil {
 		c.JSON(200, gin.H{
 			"result": "fail",
@@ -258,7 +259,7 @@ func AccountUpdate(c *gin.Context) {
 }
 
 // 改自己的密碼
-func ChangePassword(c *gin.Context) {
+func ChangeSelfPassword(c *gin.Context) {
 	// 找出header裡的token
 	token := ""
 	for k, v := range c.Request.Header {
@@ -279,7 +280,7 @@ func ChangePassword(c *gin.Context) {
 		ReturnError(c, err.Error())
 		return
 	}
-	err = internal.ChangePassword(id, input.NewPassword)
+	err = internal.ChangeSelfPassword(id, input.NewPassword)
 	if err != nil {
 		ReturnError(c, err.Error())
 		return

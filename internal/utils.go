@@ -2,10 +2,12 @@ package internal
 
 import (
 	"IAM/pkg/cache"
+	dbb "IAM/pkg/db"
 	"IAM/pkg/model"
 	pd "IAM/pkg/password"
 	"IAM/pkg/token"
 	"errors"
+	"fmt"
 )
 
 func SignUp(username, password, email string, auth int) (int64, error) {
@@ -15,7 +17,7 @@ func SignUp(username, password, email string, auth int) (int64, error) {
 		return 0, errors.New("not enough password strength")
 	}
 	// 新增到DB
-	id, err := model.CreateAccounts(username, password, email, auth)
+	id, err := model.CreateAccount(username, password, email, int32(auth))
 
 	return id, err
 }
@@ -70,8 +72,9 @@ func Tokenverify(token string) (int, int, error) {
 }
 
 // 取得所有帳號信息, 除了密碼
-func GetAllAccount() ([]model.AccountFields, error) {
+func GetAllAccount() ([]dbb.ListAccountsRow, error) {
 	allAccounts, err := model.QueryAllAccounts()
+
 	if err != nil {
 		return nil, err
 	}
@@ -85,24 +88,26 @@ func UpdateSingelAccount(params map[string]interface{}) error {
 	if ok {
 		delete(params, "Password")
 	}
-	err := model.UpdateAccount(params)
+	username := params["Username"].(string)
+	Email := params["Email"].(string)
+	Auth := params["Auth"].(int)
+	id := params["Id"].(int)
+	err := model.UpdateAccountAllField(username, Email, int32(Auth), int32(id))
 	if err != nil {
+		fmt.Println(94, err)
 		return err
 	}
 	return nil
 }
 
 // 改密碼
-func ChangePassword(id int, password string) error {
+func ChangeSelfPassword(id int, password string) error {
 	// 檢查密碼強度
 	ok := pd.CheckPasswordStrength(password)
 	if !ok {
 		return errors.New("password is not strong enough")
 	}
-	params := make(map[string]interface{})
-	params["Id"] = id
-	params["Password"] = password
-	err := model.UpdateAccount(params)
+	err := model.ChangePassword(int32(id), password)
 	if err != nil {
 		return err
 	}
@@ -112,10 +117,11 @@ func ChangePassword(id int, password string) error {
 
 // admin初始化密碼專用,不檢查密碼強度
 func InitPassword(id int, password string) error {
-	params := make(map[string]interface{})
-	params["Id"] = id
-	params["Password"] = password
-	err := model.UpdateAccount(params)
+	//params := make(map[string]interface{})
+	//params["Id"] = id
+	//params["Password"] = password
+	//err := model.UpdateAccount(params)
+	err := model.ChangePassword(int32(id), password)
 	if err != nil {
 		return err
 	}
