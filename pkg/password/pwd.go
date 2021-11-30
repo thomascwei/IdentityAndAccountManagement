@@ -1,9 +1,9 @@
 package password
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"github.com/trustelem/zxcvbn"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // 檢查密碼強度
@@ -17,7 +17,15 @@ func CheckPasswordStrength(pwd string) bool {
 }
 
 // 密碼加密
-func Encryption(pwd string) string {
-	sum := sha256.Sum256([]byte(pwd))
-	return fmt.Sprintf("%x", sum)
+func Encryption(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", fmt.Errorf("failed to hash password: %w", err)
+	}
+	return string(hashedPassword), nil
+}
+
+// CheckPassword checks if the provided password is correct or not
+func CheckPassword(password string, hashedPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }

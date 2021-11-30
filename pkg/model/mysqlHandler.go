@@ -6,7 +6,6 @@ import (
 	pd "IAM/pkg/password"
 	"context"
 	"database/sql"
-	"errors"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -19,17 +18,18 @@ func VerifyPassword(username, password string) (bool, cache.TokenValue, error) {
 		return false, cache.TokenValue{}, err
 	}
 	var tokenvalue cache.TokenValue
-	var pwd string
+	var DBPwd string
 	for rows.Next() {
-		err = rows.Scan(&tokenvalue.Id, &tokenvalue.Auth, &pwd)
+		err = rows.Scan(&tokenvalue.Id, &tokenvalue.Auth, &DBPwd)
 	}
 	if err != nil {
 		return false, cache.TokenValue{}, err
 	}
-	if pd.Encryption(password) == pwd {
-		return true, tokenvalue, nil
+	err = pd.CheckPassword(password, DBPwd)
+	if err != nil {
+		return false, cache.TokenValue{}, err
 	}
-	return false, cache.TokenValue{}, errors.New("account password invalid")
+	return true, tokenvalue, nil
 }
 
 /*
@@ -115,7 +115,10 @@ func QueryAllAccounts() ([]dbb.ListAccountsRow, error) {
 
 // 建立新帳戶
 func CreateAccount(username, password, email string, auth int32) (int64, error) {
-	password = pd.Encryption(password)
+	password, err = pd.Encryption(password)
+	if err != nil {
+		return 0, err
+	}
 	result, err := queries.CreateAccount(ctx, dbb.CreateAccountParams{
 		Username: username,
 		Password: password,
@@ -143,8 +146,12 @@ func DeleteAccount(id int32) error {
 
 //只改密碼
 func ChangePassword(id int32, password string) error {
+	password, err = pd.Encryption(password)
+	if err != nil {
+		return err
+	}
 	input := dbb.UpdatePasswordParams{
-		Password: pd.Encryption(password),
+		Password: password,
 		ID:       id,
 	}
 	err := queries.UpdatePassword(ctx, input)
