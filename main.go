@@ -1,7 +1,7 @@
 package main
 
 import (
-	"IAM/api"
+	"IAM/internal"
 	"io"
 	"log"
 	"os"
@@ -32,14 +32,17 @@ func main() {
 	//以Gin框架起一個post接收數據, 收到後塞進該點位的專屬channel
 	r := gin.Default()
 
-	r.POST("/IAM/V1/Login", api.Login)
-	r.GET("/IAM/V1/Logout", api.Logout)
-	r.POST("/IAM/V1/create_account", api.SignUp)
-	r.GET("/IAM/V1/all_accounts", api.GetAllAccount)
-	r.POST("/IAM/V1/account_update", api.AccountUpdate)
-	r.POST("/IAM/V1/change_password", api.ChangeSelfPassword)
-	r.POST("/IAM/V1/init_password", api.InitPassword)
-	r.GET("/IAM/V1/token_verify", api.Tokenverify)
+	r.POST("/IAM/V1/Login", internal.LoginRoute)
+	r.GET("/IAM/V1/Logout", internal.LogoutRoute)
+
+	// 加一層middleware驗證token
+	authRoutes := r.Group("/").Use(internal.AuthMiddleware())
+	authRoutes.GET("/IAM/V1/all_accounts", internal.GetAllAccountRoute)
+	authRoutes.POST("/IAM/V1/create_account", internal.SignUpRoute)
+	authRoutes.POST("/IAM/V1/account_update", internal.AccountUpdateRoute)
+	authRoutes.POST("/IAM/V1/change_password", internal.ChangeSelfPasswordRoute)
+	authRoutes.POST("/IAM/V1/init_password", internal.InitPasswordRoute)
+	authRoutes.GET("/IAM/V1/token_verify", internal.TokenverifyRoute)
 
 	r.Run(":9567")
 }

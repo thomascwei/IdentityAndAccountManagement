@@ -1,17 +1,14 @@
-package api
+package internal
 
 import (
-	"IAM/internal"
 	"fmt"
+	"github.com/fatih/structs"
+	"github.com/gin-gonic/gin"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"strconv"
-
-	"github.com/fatih/structs"
-	"github.com/gin-gonic/gin"
-	"gopkg.in/yaml.v2"
 )
 
 type User struct {
@@ -43,7 +40,7 @@ type YamlConfig struct {
 }
 
 func (y *YamlConfig) getConf() *YamlConfig {
-	yamlFile, err := ioutil.ReadFile("api/config.yaml")
+	yamlFile, err := ioutil.ReadFile("config/auth.yaml")
 	if err != nil {
 		log.Printf("yamlFile.Get err   #%v ", err)
 	}
@@ -73,23 +70,13 @@ func ReturnError(c *gin.Context, info string) {
 }
 
 // 建立帳戶
-func SignUp(c *gin.Context) {
-	// 找出header裡的token
-	token := ""
-	for k, v := range c.Request.Header {
-		if k == "Authorization" {
-			token = v[0]
-		}
-	}
-	// 確認token有效並得到此token的auth
-	_, auth, err := internal.Tokenverify(token)
-	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "token error, " + err.Error(),
-		})
+func SignUpRoute(c *gin.Context) {
+	authInterface, ok := c.Get("auth")
+	if !ok {
+		ReturnError(c, "cannot get auth from middleware")
 		return
 	}
+	auth := authInterface.(int)
 	// 確認有使用此API的權限
 	if auth < CConfig.API.SignUp {
 		c.JSON(200, gin.H{
@@ -101,7 +88,7 @@ func SignUp(c *gin.Context) {
 
 	// 讀request body
 	input := User{}
-	err = c.BindJSON(&input)
+	err := c.BindJSON(&input)
 	fmt.Println(104, input.Auth)
 	if err != nil {
 		c.JSON(200, gin.H{
@@ -119,7 +106,7 @@ func SignUp(c *gin.Context) {
 		return
 	}
 	// 建立帳號
-	id, err := internal.SignUp(input.Username, input.Password, input.Email, input.Auth)
+	id, err := SignUp(input.Username, input.Password, input.Email, input.Auth)
 	if err != nil {
 		c.JSON(200, gin.H{
 			"result": "fail",
@@ -127,7 +114,6 @@ func SignUp(c *gin.Context) {
 		})
 		return
 	}
-	_, _, _ = internal.Tokenverify(token)
 	c.JSON(200, gin.H{
 		"result": "ok",
 		"id":     id,
@@ -136,7 +122,7 @@ func SignUp(c *gin.Context) {
 }
 
 // 登入
-func Login(c *gin.Context) {
+func LoginRoute(c *gin.Context) {
 	m := login{}
 	err := c.Bind(&m)
 	if err != nil {
@@ -148,7 +134,7 @@ func Login(c *gin.Context) {
 		ReturnError(c, "request body format error")
 		return
 	}
-	token, err := internal.Login(m.Username, m.Password)
+	token, err := Login(m.Username, m.Password)
 	if err != nil {
 		ReturnError(c, err.Error())
 		return
@@ -162,7 +148,7 @@ func Login(c *gin.Context) {
 }
 
 // 登出
-func Logout(c *gin.Context) {
+func LogoutRoute(c *gin.Context) {
 	// 找出token
 	token := ""
 	for k, v := range c.Request.Header {
@@ -171,38 +157,30 @@ func Logout(c *gin.Context) {
 		}
 	}
 	// 刪除token, 不管是否存在
-	_ = internal.Logout(token)
+	_ = Logout(token)
 	c.JSON(200, gin.H{
 		"result": "ok",
 	})
 }
 
 // 取得帳號戶清單及內容
-func GetAllAccount(c *gin.Context) {
-	// 找出header裡的token
-	token := ""
-	for k, v := range c.Request.Header {
-		if k == "Authorization" {
-			token = v[0]
-		}
-	}
-	// 確認token有效並得到此token的auth
-	_, auth, err := internal.Tokenverify(token)
-	if err != nil {
-		ReturnError(c, err.Error())
+func GetAllAccountRoute(c *gin.Context) {
+	authInterface, ok := c.Get("auth")
+	if !ok {
+		ReturnError(c, "cannot get auth from middleware")
 		return
 	}
+	auth := authInterface.(int)
 	// 確認有使用此API的權限
 	if auth < CConfig.API.GetAllAccount {
 		ReturnError(c, "not authorized")
 		return
 	}
-	result, err := internal.GetAllAccount()
+	result, err := GetAllAccount()
 	if err != nil {
 		ReturnError(c, err.Error())
 		return
 	}
-	_, _, _ = internal.Tokenverify(token)
 	c.JSON(200, gin.H{
 		"result":   "ok",
 		"accounts": result,
@@ -210,29 +188,23 @@ func GetAllAccount(c *gin.Context) {
 }
 
 // 更新帳戶內容
-func AccountUpdate(c *gin.Context) {
-	// 找出header裡的token
-	token := ""
-	for k, v := range c.Request.Header {
-		if k == "Authorization" {
-			token = v[0]
-		}
-	}
-	// 確認token有效並得到此token的auth
-	id, auth, err := internal.Tokenverify(token)
-	if err != nil {
-		ReturnError(c, err.Error())
+func AccountUpdateRoute(c *gin.Context) {
+	// 從middleware context取得權限
+	authInterface, ok := c.Get("auth")
+	if !ok {
+		ReturnError(c, "cannot get auth from middleware")
 		return
 	}
+	auth := authInterface.(int)
 
 	// 確認有使用此API的權限
 	if auth < CConfig.API.Update {
-		ReturnError(c, "ID:"+strconv.Itoa(id)+" not authorized")
+		ReturnError(c, "not authorized")
 		return
 	}
 	// 讀request body
 	input := User{}
-	err = c.BindJSON(&input)
+	err := c.BindJSON(&input)
 	fmt.Println("user:", input)
 	if err != nil {
 		ReturnError(c, err.Error())
@@ -248,45 +220,38 @@ func AccountUpdate(c *gin.Context) {
 	// 刪除password, 密碼要在其他API單獨改
 	delete(UserMap, "Password")
 	fmt.Println("UserMap:", UserMap)
-	err = internal.UpdateSingelAccount(UserMap)
+	err = UpdateSingelAccount(UserMap)
 	if err != nil {
 		ReturnError(c, err.Error())
 		return
 	}
-	_, _, _ = internal.Tokenverify(token)
 	c.JSON(200, gin.H{
 		"result": "ok",
 	})
 }
 
 // 改自己的密碼
-func ChangeSelfPassword(c *gin.Context) {
-	// 找出header裡的token
-	token := ""
-	for k, v := range c.Request.Header {
-		if k == "Authorization" {
-			token = v[0]
-		}
-	}
-	// 確認token有效並得到此token的auth
-	id, _, err := internal.Tokenverify(token)
-	if err != nil {
-		ReturnError(c, err.Error())
+func ChangeSelfPasswordRoute(c *gin.Context) {
+	// 從middleware context取得權限
+	idInterface, ok := c.Get("id")
+	if !ok {
+		ReturnError(c, "cannot get auth from middleware")
 		return
 	}
+	id := idInterface.(int)
+
 	// 讀request body
 	input := changePassword{}
-	err = c.BindJSON(&input)
+	err := c.BindJSON(&input)
 	if err != nil {
 		ReturnError(c, err.Error())
 		return
 	}
-	err = internal.ChangeSelfPassword(id, input.NewPassword)
+	err = ChangeSelfPassword(id, input.NewPassword)
 	if err != nil {
 		ReturnError(c, err.Error())
 		return
 	}
-	_, _, _ = internal.Tokenverify(token)
 	c.JSON(200, gin.H{
 		"result": "ok",
 	})
@@ -294,20 +259,14 @@ func ChangeSelfPassword(c *gin.Context) {
 }
 
 // 初始化密碼(忘記密碼時使用)
-func InitPassword(c *gin.Context) {
-	// 找出header裡的token
-	token := ""
-	for k, v := range c.Request.Header {
-		if k == "Authorization" {
-			token = v[0]
-		}
-	}
-	// 確認token有效並得到此token的auth
-	_, auth, err := internal.Tokenverify(token)
-	if err != nil {
-		ReturnError(c, "token error, "+err.Error())
+func InitPasswordRoute(c *gin.Context) {
+	// 從middleware context取得權限
+	authInterface, ok := c.Get("auth")
+	if !ok {
+		ReturnError(c, "cannot get auth from middleware")
 		return
 	}
+	auth := authInterface.(int)
 	// 確認有使用此API的權限
 	if auth < CConfig.API.InitPassword {
 		ReturnError(c, "not authorized")
@@ -315,18 +274,16 @@ func InitPassword(c *gin.Context) {
 	}
 	// 讀request body
 	input := changePassword{}
-	err = c.BindJSON(&input)
+	err := c.BindJSON(&input)
 	if err != nil {
 		ReturnError(c, err.Error())
 		return
 	}
-	err = internal.InitPassword(input.Id, input.NewPassword)
+	err = InitPassword(input.Id, input.NewPassword)
 	if err != nil {
 		ReturnError(c, err.Error())
 		return
 	}
-	// 更新token時效
-	_, _, _ = internal.Tokenverify(token)
 	c.JSON(200, gin.H{
 		"result": "ok",
 	})
@@ -334,20 +291,8 @@ func InitPassword(c *gin.Context) {
 }
 
 // 確認token是否有效
-func Tokenverify(c *gin.Context) {
-	// 找出header裡的token
-	token := ""
-	for k, v := range c.Request.Header {
-		if k == "Authorization" {
-			token = v[0]
-		}
-	}
-	// 確認token有效並得到此token的auth
-	_, _, err := internal.Tokenverify(token)
-	if err != nil {
-		ReturnError(c, "token error, "+err.Error())
-		return
-	}
+func TokenverifyRoute(c *gin.Context) {
+	// middleware通過後回傳ok
 	c.JSON(200, gin.H{
 		"result": "ok",
 	})

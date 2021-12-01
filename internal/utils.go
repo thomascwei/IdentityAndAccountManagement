@@ -63,7 +63,7 @@ func Tokenverify(token string) (int, int, error) {
 	value, err := cache.CacheGet(token)
 	// cache取不到返回失敗
 	if err != nil {
-		return -1, -1, err
+		return -1, -1, errors.New("invalid token")
 	}
 	// 更新token時效
 	cache.SetWithExpire(token, value, 300)
