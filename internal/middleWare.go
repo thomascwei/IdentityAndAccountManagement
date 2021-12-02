@@ -2,6 +2,7 @@ package internal
 
 import (
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 //驗證token, 通過後向後傳遞auth
@@ -17,7 +18,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		// 確認token有效並得到此token的auth
 		id, auth, err := Tokenverify(token)
 		if err != nil {
-			ReturnError(c, err.Error())
+			ReturnError(c, http.StatusInternalServerError, err.Error())
 			c.Abort()
 		}
 		c.Set("auth", auth)

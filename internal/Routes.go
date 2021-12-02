@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 )
 
@@ -61,9 +62,9 @@ var (
 	//Error   = log.New(io.MultiWriter(file, os.Stdout), "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 )
 
-func ReturnError(c *gin.Context, info string) {
+func ReturnError(c *gin.Context, statusCode int, info string) {
 	Info.Println(info)
-	c.JSON(200, gin.H{
+	c.JSON(statusCode, gin.H{
 		"result": "fail",
 		"error":  info,
 	})
@@ -73,47 +74,34 @@ func ReturnError(c *gin.Context, info string) {
 func SignUpRoute(c *gin.Context) {
 	authInterface, ok := c.Get("auth")
 	if !ok {
-		ReturnError(c, "cannot get auth from middleware")
+		ReturnError(c, 500, "cannot get auth from middleware")
 		return
 	}
 	auth := authInterface.(int)
 	// 確認有使用此API的權限
 	if auth < CConfig.API.SignUp {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "not authorized",
-		})
+		ReturnError(c, http.StatusUnauthorized, "cannot get auth from middleware")
 		return
 	}
-
 	// 讀request body
 	input := User{}
 	err := c.BindJSON(&input)
-	fmt.Println(104, input.Auth)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  err.Error(),
-		})
+		ReturnError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	// 確認新帳號權限小於自身帳號
 	if auth <= input.Auth {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  "you cannot create authority higher than or equal to yourself",
-		})
+		ReturnError(c, http.StatusUnprocessableEntity, "you cannot create authority higher than or equal to yourself")
 		return
 	}
 	// 建立帳號
 	id, err := SignUp(input.Username, input.Password, input.Email, input.Auth)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"result": "fail",
-			"error":  err.Error(),
-		})
+		ReturnError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+	// 成功建立帳號後返回id
 	c.JSON(200, gin.H{
 		"result": "ok",
 		"id":     id,
@@ -126,19 +114,20 @@ func LoginRoute(c *gin.Context) {
 	m := login{}
 	err := c.Bind(&m)
 	if err != nil {
-		ReturnError(c, err.Error())
+		ReturnError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	// 檢查request body轉type後是否少欄位
 	if m.Username == "" || m.Password == "" {
-		ReturnError(c, "request body format error")
+		ReturnError(c, http.StatusBadRequest, "request body format error")
 		return
 	}
 	token, err := Login(m.Username, m.Password)
 	if err != nil {
-		ReturnError(c, err.Error())
+		ReturnError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+	// 登入成功後返回token
 	c.JSON(200, gin.H{
 		"result": "ok",
 		"token":  token,
@@ -167,18 +156,18 @@ func LogoutRoute(c *gin.Context) {
 func GetAllAccountRoute(c *gin.Context) {
 	authInterface, ok := c.Get("auth")
 	if !ok {
-		ReturnError(c, "cannot get auth from middleware")
+		ReturnError(c, http.StatusInternalServerError, "cannot get auth from middleware")
 		return
 	}
 	auth := authInterface.(int)
 	// 確認有使用此API的權限
 	if auth < CConfig.API.GetAllAccount {
-		ReturnError(c, "not authorized")
+		ReturnError(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 	result, err := GetAllAccount()
 	if err != nil {
-		ReturnError(c, err.Error())
+		ReturnError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.JSON(200, gin.H{
@@ -192,27 +181,26 @@ func AccountUpdateRoute(c *gin.Context) {
 	// 從middleware context取得權限
 	authInterface, ok := c.Get("auth")
 	if !ok {
-		ReturnError(c, "cannot get auth from middleware")
+		ReturnError(c, http.StatusInternalServerError, "cannot get auth from middleware")
 		return
 	}
 	auth := authInterface.(int)
 
 	// 確認有使用此API的權限
 	if auth < CConfig.API.Update {
-		ReturnError(c, "not authorized")
+		ReturnError(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 	// 讀request body
 	input := User{}
 	err := c.BindJSON(&input)
-	fmt.Println("user:", input)
 	if err != nil {
-		ReturnError(c, err.Error())
+		ReturnError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	// 新權限必須小於此token
 	if input.Auth >= auth {
-		ReturnError(c, "auth too high")
+		ReturnError(c, http.StatusUnprocessableEntity, "you cannot create authority higher than or equal to yourself")
 		return
 	}
 	// 轉成map
@@ -222,7 +210,7 @@ func AccountUpdateRoute(c *gin.Context) {
 	fmt.Println("UserMap:", UserMap)
 	err = UpdateSingelAccount(UserMap)
 	if err != nil {
-		ReturnError(c, err.Error())
+		ReturnError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.JSON(200, gin.H{
@@ -235,7 +223,7 @@ func ChangeSelfPasswordRoute(c *gin.Context) {
 	// 從middleware context取得權限
 	idInterface, ok := c.Get("id")
 	if !ok {
-		ReturnError(c, "cannot get auth from middleware")
+		ReturnError(c, http.StatusInternalServerError, "cannot get auth from middleware")
 		return
 	}
 	id := idInterface.(int)
@@ -244,12 +232,12 @@ func ChangeSelfPasswordRoute(c *gin.Context) {
 	input := changePassword{}
 	err := c.BindJSON(&input)
 	if err != nil {
-		ReturnError(c, err.Error())
+		ReturnError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	err = ChangeSelfPassword(id, input.NewPassword)
 	if err != nil {
-		ReturnError(c, err.Error())
+		ReturnError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.JSON(200, gin.H{
@@ -263,25 +251,25 @@ func InitPasswordRoute(c *gin.Context) {
 	// 從middleware context取得權限
 	authInterface, ok := c.Get("auth")
 	if !ok {
-		ReturnError(c, "cannot get auth from middleware")
+		ReturnError(c, http.StatusInternalServerError, "cannot get auth from middleware")
 		return
 	}
 	auth := authInterface.(int)
 	// 確認有使用此API的權限
 	if auth < CConfig.API.InitPassword {
-		ReturnError(c, "not authorized")
+		ReturnError(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 	// 讀request body
 	input := changePassword{}
 	err := c.BindJSON(&input)
 	if err != nil {
-		ReturnError(c, err.Error())
+		ReturnError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	err = InitPassword(input.Id, input.NewPassword)
 	if err != nil {
-		ReturnError(c, err.Error())
+		ReturnError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.JSON(200, gin.H{
