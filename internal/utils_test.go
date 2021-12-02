@@ -53,7 +53,7 @@ func TestLogout(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = cache.CacheGet(token)
-	require.NoErrorf(t, err, "remove token fail")
+	require.Errorf(t, err, "remove token fail")
 
 }
 
