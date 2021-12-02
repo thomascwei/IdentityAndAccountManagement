@@ -2,14 +2,12 @@ package internal
 
 import (
 	"IAM/pkg/cache"
-	"IAM/pkg/model"
 	"IAM/pkg/password"
-	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"testing"
 )
 
-var db, err = sql.Open("mysql", "thomas:123456@/iam?charset=utf8&parseTime=true")
+//var db, err = sql.Open("mysql", "thomas:123456@/iam?charset=utf8&parseTime=true")
 var _, _ = db.Exec("CREATE TABLE IF NOT EXISTS `accounts`\n(\n    `id`       int          NOT NULL AUTO_INCREMENT,\n    `username` VARCHAR(30)  NOT NULL,\n    `password` VARCHAR(100) NOT NULL,\n    `email`    VARCHAR(50)  not NULL,\n    `auth`     INT          not NULL,\n    UNIQUE (`username`),\n    PRIMARY KEY (`id`)\n);")
 var _, _ = db.Exec("INSERT accounts\nSET username='Admin',\n    password='$2a$10$dN7Da733DxGG4CLLfRQ.5OV8UakM8H1yo5o1aWj9uOGPSBU7ZmmY6',\n    Email='admin@admin.com',\n    Auth=255;")
 var _, _ = db.Exec("INSERT accounts\nSET username='Manager',\n    password='$2a$10$dN7Da733DxGG4CLLfRQ.5OV8UakM8H1yo5o1aWj9uOGPSBU7ZmmY6',\n    Email='manager@admin.com',\n    Auth=200;")
@@ -38,7 +36,7 @@ func TestSignUp(t *testing.T) {
 		t.Errorf("ID mismatch, create account fail")
 	}
 
-	model.DeleteAccount(int32(got))
+	DeleteAccount(int32(got))
 }
 
 func TestLogin(t *testing.T) {

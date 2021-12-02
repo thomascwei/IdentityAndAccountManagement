@@ -3,12 +3,15 @@ package internal
 import (
 	"IAM/pkg/cache"
 	dbb "IAM/pkg/db"
-	"IAM/pkg/model"
 	pd "IAM/pkg/password"
 	"IAM/pkg/token"
+	"database/sql"
 	"errors"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 )
+
+var db, err = sql.Open("mysql", "thomas:123456@/iam?charset=utf8")
 
 func SignUp(username, password, email string, auth int) (int64, error) {
 	// 檢查密碼強度
@@ -17,7 +20,7 @@ func SignUp(username, password, email string, auth int) (int64, error) {
 		return 0, errors.New("not enough password strength")
 	}
 	// 新增到DB
-	id, err := model.CreateAccount(username, password, email, int32(auth))
+	id, err := CreateAccount(username, password, email, int32(auth))
 
 	return id, err
 }
@@ -25,7 +28,7 @@ func SignUp(username, password, email string, auth int) (int64, error) {
 // 比對SQL的帳密, 成功返回token,nil ; 失敗返回""與error
 func Login(username, password string) (string, error) {
 	// 驗證帳密
-	ok, IdAuth, err := model.VerifyPassword(username, password)
+	ok, IdAuth, err := VerifyPassword(username, password)
 	if !ok {
 		return "", err
 	}
@@ -73,7 +76,7 @@ func Tokenverify(token string) (int, int, error) {
 
 // 取得所有帳號信息, 除了密碼
 func GetAllAccount() ([]dbb.ListAccountsRow, error) {
-	allAccounts, err := model.QueryAllAccounts()
+	allAccounts, err := QueryAllAccounts()
 
 	if err != nil {
 		return nil, err
@@ -92,7 +95,7 @@ func UpdateSingelAccount(params map[string]interface{}) error {
 	Email := params["Email"].(string)
 	Auth := params["Auth"].(int)
 	id := params["Id"].(int)
-	err := model.UpdateAccountAllField(username, Email, int32(Auth), int32(id))
+	err := UpdateAccountAllField(username, Email, int32(Auth), int32(id))
 	if err != nil {
 		fmt.Println(94, err)
 		return err
@@ -107,7 +110,7 @@ func ChangeSelfPassword(id int, password string) error {
 	if !ok {
 		return errors.New("password is not strong enough")
 	}
-	err := model.ChangePassword(int32(id), password)
+	err := ChangePassword(int32(id), password)
 	if err != nil {
 		return err
 	}
@@ -121,7 +124,7 @@ func InitPassword(id int, password string) error {
 	//params["Id"] = id
 	//params["Password"] = password
 	//err := model.UpdateAccount(params)
-	err := model.ChangePassword(int32(id), password)
+	err := ChangePassword(int32(id), password)
 	if err != nil {
 		return err
 	}

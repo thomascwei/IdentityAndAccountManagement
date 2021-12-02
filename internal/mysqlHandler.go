@@ -1,15 +1,14 @@
-package model
+package internal
 
 import (
 	"IAM/pkg/cache"
 	dbb "IAM/pkg/db"
 	pd "IAM/pkg/password"
 	"context"
-	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var db, err = sql.Open("mysql", "thomas:123456@/iam?charset=utf8")
+//var db, err = sql.Open("mysql", "thomas:123456@/iam?charset=utf8")
 
 // 驗證帳號密碼, 通過返回true, 失敗返回false
 func VerifyPassword(username, password string) (bool, cache.TokenValue, error) {
